@@ -38,7 +38,7 @@ class MyAI( AI ):
 			for j in range(rowDimension):
 				self.board[i].append(-1)
 
-		# Storing previous tiles coordinates and action.
+		# Storing previous tiles' coordinates and action. Initial action is an uncover at tile (startX, startY).
 		self.prevAction = AI.Action.UNCOVER
 		self.prevX = startX
 		self.prevY = startY
@@ -56,7 +56,7 @@ class MyAI( AI ):
 		#							YOUR CODE BEGINS						   #
 		########################################################################
 		
-		# Update board if tile was uncovered.
+		# Update board if tile was uncovered. First priority to avoid taking action on an outdated board.
 		if self.prevAction == AI.Action.UNCOVER and number >= 0:
 			if self.board[self.prevX][self.prevY] < 0:
 				self.board[self.prevX][self.prevY] = number
@@ -80,18 +80,18 @@ class MyAI( AI ):
 					markedNeighbors = 0
 
 					# Gather all valid neighbors for the current tile
-					for dy in [-1, 0, 1]:
-						for dx in [-1, 0, 1]:
+					for relativeX in [-1, 0, 1]:
+						for relativeY in [-1, 0, 1]:
 							# Skip loop if the neighbor is the current tile itself.
-							if dx == 0 and dy == 0: continue
-							# Otherwise, neighbor's coordinates are (i + dx, j + dy).
-							nx, ny = i + dx, j + dy
+							if relativeX == 0 and relativeY == 0: continue
+							# Otherwise, neighbor's coordinates are (i + relativeX, j + relativeY).
+							neighborX, neighborY = i + relativeX, j + relativeY
 							
 							# Check boundary constraints
-							if 0 <= nx < self.colDimension and 0 <= ny < self.rowDimension:
-								state = self.board[nx][ny]
+							if 0 <= neighborX < self.colDimension and 0 <= neighborY < self.rowDimension:
+								state = self.board[neighborX][neighborY]
 								if state == -1 or state == -3:
-									coveredNeighbors.append((nx, ny))
+									coveredNeighbors.append((neighborX, neighborY))
 								elif state == -2:
 									markedNeighbors += 1
 
@@ -100,20 +100,20 @@ class MyAI( AI ):
 
 					# 1st Rule: If EffectiveLabel == 0, all covered neighbors are safe to uncover.
 					if effectiveLabel == 0 and len(coveredNeighbors) > 0:
-						for nx, ny in coveredNeighbors:
-							if self.board[nx][ny] == -1:
-								self.board[nx][ny] = -3 # Mark as queued to uncover
-								self.actionQueue.append((AI.Action.UNCOVER, nx, ny))
+						for neighborX, neighborY in coveredNeighbors:
+							if self.board[neighborX][neighborY] == -1:
+								self.board[neighborX][neighborY] = -3 # Mark as queued to uncover
+								self.actionQueue.append((AI.Action.UNCOVER, neighborX, neighborY))
 						
 						if self.actionQueue:
 							return self.executeAction()
 
 					# 2nd Rule: If EffectiveLabel == NumUnmarkedNeighbors, all covered neighbors are mines and can be flagged.
 					if effectiveLabel == len(coveredNeighbors) and len(coveredNeighbors) > 0:
-						for nx, ny in coveredNeighbors:
-							if self.board[nx][ny] == -1 or self.board[nx][ny] == -3:
-								self.board[nx][ny] = -2 # Mark as flagged
-								self.actionQueue.append((AI.Action.FLAG, nx, ny))
+						for neighborX, neighborY in coveredNeighbors:
+							if self.board[neighborX][neighborY] == -1 or self.board[neighborX][neighborY] == -3:
+								self.board[neighborX][neighborY] = -2 # Mark as flagged
+								self.actionQueue.append((AI.Action.FLAG, neighborX, neighborY))
 						
 						if self.actionQueue:
 							return self.executeAction()
