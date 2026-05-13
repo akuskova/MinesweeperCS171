@@ -12,9 +12,10 @@
 #				- DO NOT MAKE CHANGES TO THIS FILE.
 # ==============================CS-199==================================
 
+from time import time
 from AI import AI
 from Action import Action
-
+import random
 
 class MyAI( AI ):
 
@@ -45,12 +46,18 @@ class MyAI( AI ):
 		
 		self.actionQueue = []
 		self.uncoveredTiles = 0
+		self.flaggedMines = 0
+
+		# Time tracking for timeout safety
+		self.startTime = time()
+		self.TIME_LIMIT = 9.5
+		
 		########################################################################
 		#							YOUR CODE ENDS							   #
 		########################################################################
 
 		
-	def getAction(self, number: int) -> "Action Object":
+	def getAction(self, number: int):
 
 		########################################################################
 		#							YOUR CODE BEGINS						   #
@@ -69,6 +76,18 @@ class MyAI( AI ):
 		# If action in queue, execute it.
 		if self.actionQueue:
 			return self.executeAction()
+
+		# If timer ran out, guess
+		if time() - self.startTime > self.TIME_LIMIT:
+			for i in range(self.colDimension):
+				for j in range(self.rowDimension):
+					if self.board[i][j] == -1:
+						self.board[i][j] = -3
+						self.prevAction = AI.Action.UNCOVER
+						self.prevX = i
+						self.prevY = j
+						return Action(AI.Action.UNCOVER, i, j)
+			return Action(AI.Action.LEAVE)
 
 		# If the queue is empty, scan the board and apply Single-Point Rules of Thumb.
 		for i in range(self.colDimension):
